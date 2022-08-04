@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    DEMO API
+  </head>
+  <body>
+    <input
+      name="fileToLoad"
+      id="fileToLoad"
+      placeholder="Archivo"
+      type="file"
+      class="form-control-file"
+    />
+    <hr />
+    <input
+      class="loadMultipleFiles"
+      name="filesToLoad[]"
+      multiple
+      id="filesToLoad"
+      placeholder="Archivo"
+      type="file"
+      class="form-control-file"
+    />
+    <div id="fileSliderLoad"></div>
+    <div id="fileToLoadLoader"></div>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.js"
+      integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      $(document).ready(function () {
+        $("#fileToLoad").change(function () {
+          addEstructuraEvento($(this).prop("id"));
+        });
+        $("#loadMultipleFiles").change(function () {
+          addMultipleEstructuraEvento($(this).prop("id"));
+        });
+      });
+      function addEstructuraEvento(fileID) {
+        var form = new FormData();
+        form.append(
+          "file",
+          document.getElementById(fileID).files[0],
+          $("#" + fileID).val()
+        );
+        // form.append("ID", "PRIUEBA ID");
+
+        $.ajax({
+          url: "/files-api/v1/documents/upload",
+          method: "POST",
+          timeout: 0,
+          headers: {
+            "x-api-key": "DEMO-KEY",
+          },
+          processData: false,
+          mimeType: "multipart/form-data",
+          contentType: false,
+          data: form,
+          dataType: "json",
+          beforeSend: function () {
+            console.log("Cargando....");
+          },
+        }).done(function (responseMultimedia) {
+          console.log(responseMultimedia);
+        });
+      }
+      function addMultipleEstructuraEvento(fileID, catTipoElemento) {
+        var form = new FormData();
+        var totalfiles = document.getElementById("fileSlider").files.length;
+        for (var index = 0; index < totalfiles; index++) {
+          form.append(
+            "fileSlider[]",
+            document.getElementById("fileSlider").files[index]
+          );
+        }
+        // form.append("ID", "PRIUEBA ID");
+
+        $.ajax({
+          url: "/files-api/v1/documents/upload-multiple",
+          method: "POST",
+          timeout: 0,
+          headers: {
+            "x-api-key": "DEMO-KEY",
+          },
+          processData: false,
+          mimeType: "multipart/form-data",
+          contentType: false,
+          data: form,
+          dataType: "json",
+          beforeSend: function () {
+            console.log("Cargando multiples documentos...");
+          },
+        }).done(function (responseMultimedia) {
+          console.log(responseMultimedia);
+        });
+      }
+    </script>
+  </body>
+</html>
