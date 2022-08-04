@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '../../../vendor/autoload.php';
+require_once __DIR__ . '../vendor/autoload.php';
 
 var_dump(getToken());
 
@@ -26,7 +26,13 @@ C:\Users\
 
 function getToken()
 {
-    
+ /*
+key s0vbxtuugtc6bee
+secret 	
+zy8tc1w6wk1sn7u
+*/
+
+
 $key ="v70u5o0081hqr68";
 $secret ="40smd062968n027";
 $refreshToken ="acOMYLSmGyIAAAAAAAAAAQxa9iUc2m69dloyb7p-WVlmqq-D7-eTxcbkyyNkcnFW";
