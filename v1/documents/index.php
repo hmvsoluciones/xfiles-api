@@ -9,6 +9,10 @@ require_once __DIR__ . '../../../app/config/api.php';
 require_once __DIR__ . '../../../app/connection/Connection.php';
 require_once __DIR__ . '../../../app/config/SlimConfig.php';
 require_once __DIR__ . '../../../app/interceptor/MiddlewareValidator.php';
+require_once __DIR__ . '../../../app/module/multimedia/dao/MultimediaDao.php';
+require_once __DIR__ . '../../../app/module/multimedia/dao/impl/MultimediaDaoImpl.php';
+require_once __DIR__ . '../../../app/module/multimedia/service/MultimediaService.php';
+require_once __DIR__ . '../../../app/module/multimedia/service/impl/MultimediaServiceImpl.php';
 require_once __DIR__ . '../../../app/util/Util.php';
 require_once __DIR__ . '../../../app/util/impl/UtilImpl.php';
 require_once __DIR__ . '../../../app/model/WSResponse.php';
@@ -39,19 +43,30 @@ $app = new \Slim\App($container);
  *   "name": "61158e9698921.png"
  *}
  */
-$app->post('/upload', function ($request, $response, $args = []) {    
+$app->post('/upload', function ($request, $response, $args = []) {
+
+   
+
     $multimediaDTO = new MultimediaDTO();
+    $multimediaService = new MultimediaServiceImpl();
 
     $config = parse_ini_file(__DIR__ . '../../../app/config/config dropbox.ini');
     $dropboxKey = $config["key"];
     $dropboxSecret = $config["secret"];
-    $dropboxToken = $config["token"];
-
-    $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
-    $dropbox = new Dropbox($app);
-
+    $dropboxRefreshToken = $config["refreshToken"];
 
     try {
+        // Generacion de token dinamico
+        $dropboxToken =  getDropboxToken($dropboxKey, $dropboxSecret, $dropboxRefreshToken);
+
+        if (!$dropboxToken) {
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json')
+                ->write(json_encode(array("error" => "No fue posible obtener el token dinamico para la carga de archivos")));
+        }
+
+        $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
+        $dropbox = new Dropbox($app);
 
         if (!empty($_FILES)) {
             $nombre = uniqid();
@@ -93,10 +108,12 @@ $app->post('/upload', function ($request, $response, $args = []) {
             $multimediaDTO->setUrlMultimediaGet(str_replace("?dl=0", "?raw=1", $dboxResponse->{'url'}));
             $multimediaDTO->setExtensionMultimedia(pathinfo($dboxResponse->{'name'}, PATHINFO_EXTENSION));
 
-            if ($multimediaDTO) {
+            
+            $multimediaResponse = $multimediaService->add($multimediaDTO);
+            if ($multimediaResponse) {
                 return $response->withStatus(200)
                     ->withHeader('Content-Type', 'application/json')
-                    ->write(json_encode($multimediaDTO->expose()));
+                    ->write(json_encode($multimediaResponse->expose()));
             } else {
                 return $response->withStatus(500)
                     ->withHeader('Content-Type', 'application/json')
@@ -131,13 +148,20 @@ $app->post('/upload-multiple', function ($request, $response, $args = []) {
     $config = parse_ini_file(__DIR__ . '../../../app/config/config dropbox.ini');
     $dropboxKey = $config["key"];
     $dropboxSecret = $config["secret"];
-    $dropboxToken = $config["token"];
-
-    $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
-    $dropbox = new Dropbox($app);
-
+    $dropboxRefreshToken = $config["refreshToken"];
 
     try {
+        // Generacion de token dinamico
+        $dropboxToken =  getDropboxToken($dropboxKey, $dropboxSecret, $dropboxRefreshToken);
+
+        if (!$dropboxToken) {
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json')
+                ->write(json_encode(array("error" => "No fue posible obtener el token dinamico para la carga de archivos")));
+        }
+
+        $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
+        $dropbox = new Dropbox($app);
 
         $serviceResponseArray = array();
 
@@ -175,10 +199,11 @@ $app->post('/upload-multiple', function ($request, $response, $args = []) {
             $multimediaDTO->setNombreMultimedia($dboxResponse->{'name'});
             $multimediaDTO->setUrlMultimedia($dboxResponse->{'url'});
             $multimediaDTO->setUrlMultimediaGet(str_replace("?dl=0", "?raw=1", $dboxResponse->{'url'}));
-            $multimediaDTO->setExtensionMultimedia(pathinfo($dboxResponse->{'name'}, PATHINFO_EXTENSION));            
-            
-            array_push($serviceResponseArray, $multimediaDTO->expose());
-           
+            $multimediaDTO->setExtensionMultimedia(pathinfo($dboxResponse->{'name'}, PATHINFO_EXTENSION));
+
+            $multimediaResponse = $multimediaService->add($multimediaDTO);
+
+            array_push($serviceResponseArray, $multimediaResponse->expose());
         }
         if ($serviceResponseArray) {
             return $response->withStatus(200)
@@ -209,27 +234,34 @@ $app->post('/delete', function ($request, $response, $args = []) {
     $config = parse_ini_file(__DIR__ . '../../../app/config/config dropbox.ini');
     $dropboxKey = $config["key"];
     $dropboxSecret = $config["secret"];
-    $dropboxToken = $config["token"];
-
-    $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
-    $dropbox = new Dropbox($app);
+    $dropboxRefreshToken = $config["refreshToken"];
 
     try {
+        // Generacion de token dinamico
+        $dropboxToken =  getDropboxToken($dropboxKey, $dropboxSecret, $dropboxRefreshToken);
+
+        if (!$dropboxToken) {
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json')
+                ->write(json_encode(array("error" => "No fue posible obtener el token dinamico para la carga de archivos")));
+        }
+
+        $app = new DropboxApp($dropboxKey, $dropboxSecret, $dropboxToken);
+        $dropbox = new Dropbox($app);
         $parsedBody = $request->getParsedBody();
 
         $deleted = $dropbox->delete($parsedBody['id']);
-        
+        $deletedDb = $multimediaService->delete($parsedBody['id']);
 
-        if ( $deleted) {
+        if ($deleted && $deletedDb) {
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json')
                 ->write(json_encode($deleted));
         } else {
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json')
-                ->write(json_encode(array("error" => "No fue posible eliminar el archivo")));
+                ->write(json_encode(array("error" => "No fue posible eliminar el archivo dbx:{$deleted}, db:{$deletedDb}")));
         }
-        
     } catch (Exception $exc) {
         return $response->withStatus(500)
             ->withHeader('Content-Type', 'application/json')
@@ -243,27 +275,46 @@ $app->post('/delete', function ($request, $response, $args = []) {
  * Obtenert todos los registros
  * http://localhost/ticketapp-systems/api/v1/demo/1
  */
-$app->get('/{id}', function ($request, $response, $args = []) {    
+$app->get('/{id}', function ($request, $response, $args = []) {
     try {
-        
-        $multimediaService = new MultimediaServiceImpl();                
+
+        $multimediaService = new MultimediaServiceImpl();
 
         $serviceResponse = $multimediaService->get($args['id']);
 
         if ($serviceResponse) {
             return $response->withStatus(200)
-                            ->withHeader('Content-Type', 'application/json')
-                            ->write(json_encode($serviceResponse));
+                ->withHeader('Content-Type', 'application/json')
+                ->write(json_encode($serviceResponse));
         } else {
             return $response->withStatus(500)
-                            ->withHeader('Content-Type', 'application/json')
-                            ->write(json_encode(array("error" => "No fue posible obtener el registro")));
+                ->withHeader('Content-Type', 'application/json')
+                ->write(json_encode(array("error" => "No fue posible obtener el registro")));
         }
     } catch (Exception $exc) {
-            return $response->withStatus(500)
-                ->withHeader('Content-Type', 'application/json')
-                ->write(json_encode(array("error" => "Ocurrio un error al obtener el registro:" . $exc->getMessage())));     
-    } 
+        return $response->withStatus(500)
+            ->withHeader('Content-Type', 'application/json')
+            ->write(json_encode(array("error" => "Ocurrio un error al obtener el registro:" . $exc->getMessage())));
+    }
 })->add(new MiddlewareValidator());
 
+/**
+ * Funcion que genera el token dinamico
+ */
+function getDropboxToken($key, $secret, $refreshToken)
+{
+    $client = new \GuzzleHttp\Client();
+    $res = $client->request("POST", "https://{$key}:{$secret}@api.dropbox.com/oauth2/token", [
+        'form_params' => [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refreshToken,
+        ]
+    ]);
+    if ($res->getStatusCode() == 200) {        
+        $response =  json_decode($res->getBody(), TRUE);
+        return $response["access_token"];
+    } else {
+        return false;
+    }
+}
 $app->run();

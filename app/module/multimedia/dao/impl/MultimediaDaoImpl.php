@@ -2,12 +2,8 @@
 
 class MultimediaDaoImpl extends Connection implements MultimediaDao {
 
-    private $util;
-
     function __construct(){
-        $this->util = new UtilImpl();
     }
-
     public function add($multimedia){
         $query = "INSERT INTO multimedia(nombremultimedia,"
           ." urlmultimedia, extension, urlmultimediaget, idremote, fechaalta ) "

@@ -20,6 +20,8 @@ C:\Users\LUIS MUNGUIA>curl https://api.dropbox.com/oauth2/token -d code=cKDS4b01
     "uid": "1260938369", 
     "account_id": "dbid:AAASnE_7yRmXq1D2R2AuaZ1bcgmQoo8f6SU"
 }
+
+{"access_token": "sl.BMsiifgqEzikLtLnUbIxPf1bOlg_zc6T8dnTgr0Qox_rI3T8Re3KEm0IZ53tY-N_v31Uz_sEfqNi6JsxCglSKw979E_HMMoXfToJcYkYTKLonv5l3JZK8XL1-aFHtx21kCy3-7EG_Sc", "token_type": "bearer", "expires_in": 14399, "refresh_token": "q9ov80vvB4EAAAAAAAAAARVwQ9qlMONopKjyklimYbsIFFjSjUKAbpKQSqKMcvdE", "scope": "account_info.read account_info.write file_requests.read file_requests.write files.content.read files.content.write files.metadata.read files.metadata.write sharing.read sharing.write", "uid": "1260938369", "account_id": "dbid:AAASnE_7yRmXq1D2R2AuaZ1bcgmQoo8f6SU"}
 C:\Users\
 */
 
