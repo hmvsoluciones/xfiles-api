@@ -23,7 +23,8 @@ API carga de archivos en dropbox, actualizacion dinamica de token
 - Generar refresh token(Unica ves)
     - https://www.dropbox.com/oauth2/authorize?client_id=<APP_KEY>&response_type=code&token_access_type=offline
     - curl https://api.dropbox.com/oauth2/token -d code=cKDS4b01t0YAAAAAAAAANGkCXwKWG4NwPBFeZLwGd8M -d grant_type=authorization_code -u <APP_KEY>:<SECRET_KEY>
-    - ```
+    - Obtener token para cada solicitud
+```
     function getToken(){
 
     $key ="?";
