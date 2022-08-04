@@ -20,7 +20,7 @@ C:\Users\LUIS MUNGUIA>curl https://api.dropbox.com/oauth2/token -d code=cKDS4b01
     "uid": "1260938369", 
     "account_id": "dbid:AAASnE_7yRmXq1D2R2AuaZ1bcgmQoo8f6SU"
 }
-C:\Users\LUIS MUNGUIA>
+C:\Users\
 */
 
 
